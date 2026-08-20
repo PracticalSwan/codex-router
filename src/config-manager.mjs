@@ -894,13 +894,25 @@ function legacyManagedRouterProvider(contents) {
     fields.get("base_url") === rootBaseUrl &&
     isManagedRouterBaseUrl(rootBaseUrl) &&
     fields.get("wire_api") === "responses";
+  const optionalCapabilitiesMatch =
+    (!fields.has("supports_standalone_web_search") ||
+      fields.get("supports_standalone_web_search") === "true") &&
+    (!fields.has("supports_websockets") || fields.get("supports_websockets") === "false");
+  const currentAllowed = new Set([
+    "name",
+    "base_url",
+    "wire_api",
+    "supports_standalone_web_search",
+    "supports_websockets",
+  ]);
+  const prototypeAllowed = new Set([...currentAllowed, "requires_openai_auth"]);
   const currentShape =
-    (fields.size === 3 ||
-      (fields.size === 4 && fields.get("supports_standalone_web_search") === "true")) &&
+    [...fields.keys()].every((key) => currentAllowed.has(key)) &&
+    optionalCapabilitiesMatch &&
     fields.get("name") === "Codex Router (external models)";
   const prototypeShape =
-    (fields.size === 4 ||
-      (fields.size === 5 && fields.get("supports_standalone_web_search") === "true")) &&
+    [...fields.keys()].every((key) => prototypeAllowed.has(key)) &&
+    optionalCapabilitiesMatch &&
     fields.get("name") === "Codex Router (extra providers)" &&
     fields.get("requires_openai_auth") === "true";
   return commonFieldsMatch && (currentShape || prototypeShape)
@@ -1056,6 +1068,7 @@ function enabledContents(contents) {
     `base_url = ${JSON.stringify(routerBaseUrl)}`,
     'wire_api = "responses"',
     "supports_standalone_web_search = true",
+    "supports_websockets = false",
     providerEndMarker,
   ];
   return withManagedAgentConcurrency(
