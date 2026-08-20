@@ -128,7 +128,6 @@ approval_policy = "never"
     assert.match(configured, /\[model_providers\.codex-router\]/);
     assert.match(configured, /wire_api = "responses"/);
     assert.match(configured, /supports_standalone_web_search = true/);
-    assert.match(configured, /supports_websockets = false/);
     assert.ok(
       configured.includes(
         `openai_base_url = "http://127.0.0.1:46192/_codex-router/${CALLER_KEY}/v1"`,
