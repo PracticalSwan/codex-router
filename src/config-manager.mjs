@@ -901,11 +901,17 @@ function legacyManagedRouterProvider(contents) {
     fields.get("wire_api") === "responses";
   const currentShape =
     (fields.size === 3 ||
-      (fields.size === 4 && fields.get("supports_standalone_web_search") === "true")) &&
+      (fields.size === 4 && fields.get("supports_standalone_web_search") === "true") ||
+      (fields.size === 5 &&
+        fields.get("supports_websockets") === "false" &&
+        fields.get("supports_standalone_web_search") === "true")) &&
     fields.get("name") === "Codex Router (external models)";
   const prototypeShape =
     (fields.size === 4 ||
-      (fields.size === 5 && fields.get("supports_standalone_web_search") === "true")) &&
+      (fields.size === 5 && fields.get("supports_standalone_web_search") === "true") ||
+      (fields.size === 6 &&
+        fields.get("supports_websockets") === "false" &&
+        fields.get("supports_standalone_web_search") === "true")) &&
     fields.get("name") === "Codex Router (extra providers)" &&
     fields.get("requires_openai_auth") === "true";
   return commonFieldsMatch && (currentShape || prototypeShape)
@@ -1080,6 +1086,7 @@ function enabledContents(contents) {
     'name = "Codex Router (external models)"',
     `base_url = ${JSON.stringify(routerBaseUrl)}`,
     'wire_api = "responses"',
+    "supports_websockets = false",
     "supports_standalone_web_search = true",
     providerEndMarker,
   ];

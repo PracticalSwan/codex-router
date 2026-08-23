@@ -127,6 +127,7 @@ approval_policy = "never"
     assert.doesNotMatch(configured, /\[agents\]/);
     assert.match(configured, /\[model_providers\.codex-router\]/);
     assert.match(configured, /wire_api = "responses"/);
+    assert.match(configured, /supports_websockets = false/);
     assert.match(configured, /supports_standalone_web_search = true/);
     assert.ok(
       configured.includes(
@@ -154,8 +155,15 @@ approval_policy = "never"
       true,
     );
 
+    writeFileSync(
+      configPath,
+      configured.replace("supports_websockets = false\n", ""),
+      { mode: 0o600 },
+    );
+
     const reenabled = run("enable", codexHome);
     assert.equal(reenabled.mode, "router");
+    assert.match(readFileSync(configPath, "utf8"), /supports_websockets = false/);
     assert.equal(
       (readFileSync(configPath, "utf8").match(/# BEGIN codex-router-managed/g) || [])
         .length,
@@ -576,6 +584,7 @@ test("config manager adopts the exact legacy router-owned provider table", () =>
     )?.[0];
     assert.ok(loginFreeProvider);
     assert.doesNotMatch(loginFreeProvider, /requires_openai_auth/);
+    assert.match(loginFreeProvider, /supports_websockets = false/);
   } finally {
     rmSync(codexHome, { recursive: true, force: true });
   }
