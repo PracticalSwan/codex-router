@@ -9,8 +9,9 @@
 // Routed models are always published. An unregistered slug on the router's
 // `/v1/responses` endpoint is treated as native GPT traffic, which needs a
 // ChatGPT session the harness does not carry — so a native model is published
-// only while `codex-native-session.mjs` can substitute the one this machine is
-// signed in with, and is withheld again the moment it cannot. See
+// only after this user authorizes the shared router plane and while
+// `codex-native-session.mjs` can substitute the session this machine is signed
+// in with. It is withheld again the moment either condition stops holding. See
 // `dshNativeModels` below.
 
 import { applyVisionBridge } from "./vision-bridge.mjs";

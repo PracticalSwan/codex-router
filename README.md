@@ -1520,20 +1520,31 @@ comments, and your other stored keys are left exactly as they were —
 A settings file this build cannot read unambiguously is refused with the file
 untouched rather than rewritten on a guess.
 
-**Native GPT models publish while this machine has a usable Codex session.**
-They are authorized by a ChatGPT session and a harness request carries none of
-its own, so the router falls back to the session Codex is already signed in with
-here — you are logged in on this machine, and a client running as the same user
-should not have to log in again. They are withheld the moment that session is
-missing or expired, so the picker never offers a turn that would 401. If they
-disappear, open Codex once to renew it; `./bin/model-router doctor` says so too.
+**Native GPT models require one explicit local authorization.** They are
+authorized by a ChatGPT session and a harness request carries none of its own.
+Sign in through the official Codex browser flow, then authorize this shared
+router plane once:
+
+```sh
+codex login
+./bin/model-router codex chatgpt-session enable
+```
+
+DeepSeek Harness, Gemini CLI, and future clients installed for this same OS
+user then reuse that one authorization over the loopback; there is no login per
+harness and the marker stores no credential. Native models are withheld until
+both the authorization and a usable Codex session exist, and disappear again
+when the session is missing or expired. Run `codex login` to renew the session;
+the one-time authorization remains in place.
 
 It is a fallback and never an override: a request that presents its own
-credential is relayed untouched, so nothing about a Codex turn changes. Worth
-knowing before leaving it on — it widens what the caller key reaches, from the
-API-key providers to your ChatGPT subscription as well. Set
-`CODEX_ROUTER_NATIVE_SESSION_FALLBACK=0` to turn it off, and the harness
-publishes routed models only.
+credential is relayed untouched, so nothing about a Codex turn changes. The
+authorization widens what the local caller key reaches, from API-key providers
+to your ChatGPT subscription as well. Revoke it everywhere with
+`./bin/model-router codex chatgpt-session disable`; Codex stays signed in and
+keeps its own native models. Headless operators may set
+`CODEX_ROUTER_NATIVE_SESSION_FALLBACK=1` as an explicit opt-in (`0` always
+forces it off).
 
 **Subagents.** A child spawned by `dsh-tool-subagent` with no model of its own
 inherits the default model selection, so it is already routed once this route
@@ -1591,8 +1602,8 @@ fabricated vector would be worse than an error. `:countTokens` is answered from
 a byte-count estimate rather than by spending a real turn upstream.
 
 **Native GPT models** publish here under the same rule as the harness, described
-above: while this machine has a usable Codex session, and withheld the moment it
-does not.
+above: after the one-time shared-plane authorization, while this machine has a
+usable Codex session, and withheld the moment either condition stops holding.
 
 ## macOS tray control panel
 

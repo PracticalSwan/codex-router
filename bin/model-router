@@ -18,14 +18,15 @@ command writes, not which router it talks to.
 
 Commands:
   setup, install, doctor, status, provider-key, providers, enable, disable,
-  multi-agent, media, panel, local-mlx, uninstall, smoke-test, start, stop, update,
-  rollback, shim, subagent-preset (dsh only)
+  chatgpt-session, multi-agent, media, panel, local-mlx, uninstall, smoke-test,
+  start, stop, update, rollback, shim, subagent-preset (dsh only)
 
 Examples:
   ./bin/model-router codex doctor
   ./bin/model-router codex status
   ./bin/model-router codex panel
   ./bin/model-router codex local-mlx install --yes
+  ./bin/model-router codex chatgpt-session enable
   ./bin/model-router codex shim install
   ./bin/model-router dsh enable
   ./bin/model-router dsh status
@@ -63,7 +64,7 @@ case "$target" in
 esac
 
 case "$command" in
-  setup|install|doctor|status|provider-key|providers|enable|disable|multi-agent|media|panel|local-mlx|uninstall|smoke-test|start|stop|update|rollback|subagent-preset|shim) ;;
+  setup|install|doctor|status|provider-key|providers|enable|disable|chatgpt-session|multi-agent|media|panel|local-mlx|uninstall|smoke-test|start|stop|update|rollback|subagent-preset|shim) ;;
   *) echo "Unknown command: $command" >&2; usage >&2; exit 2 ;;
 esac
 

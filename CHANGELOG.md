@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **ChatGPT subscription access for non-Codex clients is now an explicit,
+  one-time local authorization.** A discovered Codex `auth.json` no longer
+  silently lets DeepSeek Harness, Gemini CLI, or another caller-key client
+  spend the account. After `codex login`, the user runs `model-router codex
+  chatgpt-session enable` once; an owner-only, credential-free marker applies
+  that decision to every client on the shared loopback router plane. Disabling
+  it revokes native GPT publication everywhere without signing Codex out. A
+  missing or malformed authorization and a missing or expired session both
+  fail closed. External model routes and Codex's own session pass-through are
+  unchanged.
+
 - **Ox Alpha ships on six routes.** The stealth 1M-context reasoning model is
   now checked in for `opencode-free` (no key), `opencode-go`, `openrouter`,
   `commandcode`, `nousresearch`, and `venice`, each under the upstream id that

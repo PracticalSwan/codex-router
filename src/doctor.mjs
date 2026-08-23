@@ -1061,15 +1061,28 @@ add(
 try {
   const { nativeSessionStatus } = await import("./codex-native-session.mjs");
   const session = nativeSessionStatus();
-  if (session.present && session.fallbackEnabled) {
+  if (session.sharingEnabled) {
     const hours = session.expiresInHours;
     add(
       session.usable ? "ok" : "warn",
-      "Codex session for harness models",
+      "ChatGPT session for local clients",
       session.usable
         ? `valid${hours === undefined ? "" : ` for ${hours}h`}`
-        : "expired; open Codex once to renew it (native models are withheld until then)",
-      "Open Codex, or run `codex login`.",
+        : session.present
+          ? "expired; native models are withheld from non-Codex clients until sign-in is renewed"
+          : "sharing is enabled, but no Codex login is available; native models are withheld",
+      "Run `codex login`; the existing one-time sharing authorization will be reused.",
+    );
+  } else if (session.present) {
+    add(
+      session.usable ? "ok" : "warn",
+      "ChatGPT session for local clients",
+      session.usable
+        ? "not shared; the router exposes no native GPT models to other local clients"
+        : "not shared and not currently usable; the router exposes no native GPT models to other local clients",
+      session.usable
+        ? "To authorize every local router client once, run `./bin/model-router codex chatgpt-session enable`."
+        : "Run `codex login`, then authorize every local router client once with `./bin/model-router codex chatgpt-session enable`.",
     );
   }
 } catch {

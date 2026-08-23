@@ -359,10 +359,11 @@ function restoreDefaultModel(contents) {
  * The routed models the harness should be offered, vision bridge included.
  *
  * The rule is not the harness's own -- what may be published to a client that
- * carries no ChatGPT session of its own is the same question for every such
- * client -- so it lives in `routed-client-models.mjs` and both integrations
- * read it. Two copies would drift, and the way that shows is one picker
- * offering a model the other just lost.
+ * carries no ChatGPT session of its own, after the user's one-time router-plane
+ * authorization, is the same question for every such client -- so it lives in
+ * `routed-client-models.mjs` and both integrations read it. Two copies would
+ * drift, and the way that shows is one picker offering a model the other just
+ * lost.
  */
 export function dshRoutedModels() {
   return routedClientModels();

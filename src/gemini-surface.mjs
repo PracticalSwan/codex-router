@@ -109,7 +109,8 @@ function upstreamMessage(text) {
 // it presented it on is already the proof. Relaying it upstream would put a
 // router secret on a hop that can be substituted onto a provider; leaving the
 // header off is also what makes `callerBroughtNoUpstreamCredential` true, which
-// is how a client with no ChatGPT session of its own reaches native models.
+// is how a client with no ChatGPT session of its own reaches native models
+// after this user explicitly authorizes the shared local router plane.
 function loopbackHeaders() {
   return { "content-type": "application/json", accept: "text/event-stream" };
 }

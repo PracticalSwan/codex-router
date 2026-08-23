@@ -613,11 +613,13 @@ async function main() {
   process.stdout.write(
     dshTarget
       ? `\nDeepSeek Harness is ready with: ${providerSummary}\n` +
-        `It reloads its settings document on the next request, so there is nothing to restart.\n`
+        `It reloads its settings document on the next request, so there is nothing to restart.\n` +
+        `For native GPT models, run \`codex login\`, then \`./bin/model-router codex chatgpt-session enable\` once; that authorization is shared by every local client.\n`
       : geminiTarget
         ? `\nGemini CLI is ready with: ${providerSummary}\n` +
           `It reads its environment at startup, so the next \`gemini\` run picks this up.\n` +
-          `If it asks how to authenticate, choose "Use Gemini API key" once -- the key is this router's local caller capability.\n`
+          `If it asks how to authenticate, choose "Use Gemini API key" once -- the key is this router's local caller capability.\n` +
+          `For native GPT models, run \`codex login\`, then \`./bin/model-router codex chatgpt-session enable\` once; that authorization is shared by every local client.\n`
         : `\nCodex Router is ready with: ${providerSummary}\nFully quit Codex, reopen it, and start a new task.\n`,
   );
   if (visionBridge?.enabled && visionBridge.engine) {

@@ -88,9 +88,11 @@ service_installed=false
 trap - EXIT HUP INT TERM
 if [ "$target" = dsh ]; then
   echo "External model routes published to DeepSeek Harness. It reloads them on the next request."
+  echo "Optional native GPT models: run 'codex login', then './bin/model-router codex chatgpt-session enable' once; every local client will reuse it."
 elif [ "$target" = gemini ]; then
   echo "External model routes published to Gemini CLI. The next \`gemini\` run picks them up."
   echo "Choose \"Use Gemini API key\" once if it asks how to authenticate; the key is this router's local caller capability."
+  echo "Optional native GPT models: run 'codex login', then './bin/model-router codex chatgpt-session enable' once; every local client will reuse it."
 else
   echo "External model routes enabled. Fully quit and reopen Codex."
 fi

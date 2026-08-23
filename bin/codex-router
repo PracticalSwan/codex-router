@@ -35,6 +35,7 @@ Setup and status
 Providers and models
   providers         List providers and their authentication state
   provider-key      Store or clear a provider API key
+  chatgpt-session   Authorize or revoke shared native GPT access
   curate-models     Add, edit, or remove locally curated models
   discover-models   Probe a provider for the models it exposes
   refresh-catalog   Rebuild the merged model catalog

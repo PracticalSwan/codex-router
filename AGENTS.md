@@ -230,7 +230,8 @@ translation layer and nothing else.
    proof. Relaying it upstream would put a router secret on a hop that can be
    substituted onto a provider — and leaving the header off is also what makes
    `callerBroughtNoUpstreamCredential` true, which is how a client with no
-   ChatGPT session of its own reaches native models.
+   ChatGPT session of its own reaches native models after the user explicitly
+   authorizes the shared router plane once.
 7. **The default model is written, and that is deliberate.** Gemini CLI's own
    default is `gemini-2.5-pro`, which this router does not route, so an install
    that left it alone would 404 on the user's first turn. `GEMINI_MODEL`
@@ -314,16 +315,18 @@ beside ours, so everything else in them is somebody else's work.
    the same bound the harness itself holds them to, and status output reports
    the redacted URL exactly as the Codex manager does. Never print the complete
    managed base URL.
-4. **Routed models are always published; native ones only while a session backs
-   them.** Publish only the selected, credentialed, listed, non-hidden routed
+4. **Routed models are always published; native ones require authorization and
+   a session.** Publish only the selected, credentialed, listed, non-hidden routed
    models. An unregistered slug on the router's `/v1/responses` endpoint is
    treated as native GPT traffic needing a ChatGPT session, which a harness
-   request does not carry — so a native model is advertised only while
+   request does not carry — so a native model is advertised only while the user
+   has explicitly authorized this shared local router plane and
    `nativeSessionStatus().usable` reports the session this machine is signed in
-   with as spendable, and is withheld again the moment it is not. Publishing one
-   the router cannot authorize offers a turn that 401s, which is the failure
-   this gate exists to prevent; never widen it to presence alone, because an
-   expired session is present.
+   with as spendable. `nativeSessionAvailable()` is the combined gate. Missing
+   consent, an unreadable consent marker, sign-out, or expiry withholds the model.
+   Publishing one the router cannot authorize offers a turn that 401s, which is
+   the failure this gate exists to prevent; never widen it to presence alone,
+   because an expired session is present.
    The vision-bridge engine candidates still exclude native models: that call
    site admits an engine on evidence the *caller's* session can spend it, and a
    substituted session is not the caller's.
@@ -1754,10 +1757,12 @@ user has to find in the docs, so `src/dsh-install.mjs` owns the other half.
   get right — the PATH a spawn inherits, where npm drops binaries per platform,
   which line of npm's output is worth showing — are exactly what drifts.
 - Native GPT models are published only while `codex-native-session.mjs` reports
-  a usable session: they need a ChatGPT session, a harness request carries none
-  of its own, and the fallback spends the one this machine is already signed in
-  with. They are withheld again the moment it is missing or expired. The count
-  the button reports is the routable set, not the picker.
+  both explicit shared-plane authorization and a usable session: they need a
+  ChatGPT session, and a harness request carries none of its own. One
+  `chatgpt-session enable` applies to every local client for this OS user; they
+  are withheld again the moment authorization is revoked or the session is
+  missing or expired. The count the button reports is the routable set, not the
+  picker.
 
 `src/dsh-web.mjs` starts and finds the browser UI, so the tray's button can be
 `Open site` once there is a site to open.
@@ -1811,9 +1816,18 @@ attaches both. A harness turn attaches neither, so native models advertised to
 it were models it could never spend.
 
 `src/codex-native-session.mjs` closes that by falling back to the session this
-machine is already signed in with, in `$CODEX_HOME/auth.json`. The user is
-signed in to Codex here; asking them to sign in again for a client running as
-the same user on the same machine buys nothing.
+machine is already signed in with, in `$CODEX_HOME/auth.json`, only after the
+user authorizes that use once. `native-session-consent.json` is an owner-only
+marker carrying no credential and belongs to the shared router plane: asking
+the same OS user to sign in or authorize once per harness buys nothing.
+
+- **Consent fails closed.** A missing, malformed, or unrecognized marker means
+  off. `chatgpt-session enable` refuses until `codex login` has produced a
+  usable session, then republishes every installed client; `disable` removes
+  the marker and republishes them again without signing Codex out. The
+  `CODEX_ROUTER_NATIVE_SESSION_FALLBACK=1` environment override is the explicit
+  headless opt-in, while `0` is an emergency off switch. No other value is
+  consent.
 
 - **Fallback, never override.** Injection happens only when the request carried
   no *upstream* credential. Codex always carries one, so a Codex turn is
@@ -1847,10 +1861,11 @@ the same user on the same machine buys nothing.
   a status call, and not put in an error message. `nativeSessionStatus()` reports
   presence, usability, and age — `test/codex-native-session.test.mjs` asserts the
   serialized status contains neither the token nor the account id.
-- **It widens the caller key.** With the fallback on, anything holding that key
-  spends the ChatGPT subscription and not only the API-key providers. That is a
-  deliberate, user-made tradeoff; `CODEX_ROUTER_NATIVE_SESSION_FALLBACK=0` turns
-  it off and the harness silently drops back to routed models only.
+- **It widens the caller key.** With sharing authorized, anything holding that
+  local key spends the ChatGPT subscription and not only the API-key providers.
+  That is a deliberate, user-made tradeoff recorded once for the shared plane;
+  `chatgpt-session disable` revokes it everywhere and the clients silently drop
+  back to routed models only.
 - **The access token lives about ten days, and Codex renews it only when Codex
   is used.** A harness-only stretch longer than that would otherwise leave the
   router sending a dead token. `nativeSessionHeaders()` reads the `exp` claim

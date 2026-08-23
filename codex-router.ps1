@@ -14,7 +14,7 @@ $Command = if ($args.Count) { [string]$args[0] } else { "status" }
 $Arguments = @(if ($args.Count -gt 1) { $args[1..($args.Count - 1)] })
 $Commands = @(
   "setup", "install", "doctor", "status", "providers", "provider-key", "enable",
-  "disable", "uninstall", "update", "rollback", "support-bundle",
+  "disable", "chatgpt-session", "uninstall", "update", "rollback", "support-bundle",
   "smoke-test", "start", "stop", "test-model", "discover-models", "local-mlx",
   "signed-routing", "refresh-catalog", "media", "tray", "panel", "companion"
 )
@@ -234,6 +234,7 @@ switch ($Command) {
   }
   "providers" { Invoke-RouterNode "src\providers.mjs" $Arguments }
   "provider-key" { Invoke-RouterNode "src\provider-key.mjs" $Arguments }
+  "chatgpt-session" { Invoke-RouterNode "src\chatgpt-session.mjs" $Arguments }
   # `bin/install` accepts --prepare-only/--migrate-known/--force-deps, so the
   # Windows wrapper has to pass the equivalent switches through instead of
   # dropping them; `./model-router.ps1 codex install -ForceDeps` was silently

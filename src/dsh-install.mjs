@@ -154,11 +154,11 @@ export async function setupHarness({ force = false, setDefaultModel = false } = 
     installedNow: install.changed,
     published,
     web: await dshWebState(),
-    // `published` is the routed count. Native GPT models ride the Codex session
-    // this machine is signed in with, so they come and go with it -- reporting
-    // the routed set beats a number that changes when nobody published
-    // anything, and beats letting somebody count the picker and conclude the
-    // publish dropped them.
+    // `published` is the routed count. Native GPT models require this user's
+    // one-time shared-plane authorization plus a usable Codex session, so they
+    // come and go independently -- reporting the routed set beats a number
+    // that changes when nobody published anything, and beats letting somebody
+    // count the picker and conclude the publish dropped them.
     launch: `${DSH_EXECUTABLE} web`,
   };
 }

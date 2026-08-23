@@ -141,7 +141,8 @@ test("the caller's own key is never relayed upstream", async () => {
   // The key the CLI sends is this router's caller capability. Forwarding it on
   // the loopback would put a router secret into a request that can be
   // substituted onto a real provider hop -- and `callerBroughtNoUpstreamCredential`
-  // is what lets a client with no ChatGPT session of its own reach native models.
+  // is what lets an explicitly authorized client with no ChatGPT session of
+  // its own reach native models.
   const back = await upstream((request, response) => {
     writeJson(response, 200, { status: "completed", output: [] });
   });
