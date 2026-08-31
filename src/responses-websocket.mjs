@@ -558,6 +558,35 @@ function continuationState(input, output, maxBytes) {
   return encoded.length <= maxBytes ? { input, output } : undefined;
 }
 
+function continuationItemKey(item) {
+  if (typeof item?.call_id === "string" && item.call_id) return `call:${item.call_id}`;
+  if (typeof item?.id === "string" && item.id) return `id:${item.id}`;
+  return undefined;
+}
+
+function reconciledContinuationOutput(completedOutput, outputItems) {
+  if (!Array.isArray(completedOutput)) return outputItems;
+  if (!Array.isArray(outputItems) || outputItems.length === 0) return completedOutput;
+
+  const doneByKey = new Map();
+  for (const item of outputItems) {
+    const key = continuationItemKey(item);
+    if (key) doneByKey.set(key, item);
+  }
+
+  const used = new Set();
+  const reconciled = completedOutput.map((item) => {
+    const key = continuationItemKey(item);
+    const done = key ? doneByKey.get(key) : undefined;
+    if (!done) return item;
+    used.add(done);
+    return done;
+  });
+  for (const item of outputItems) {
+    if (!used.has(item)) reconciled.push(item);
+  }
+  return reconciled;
+}
 function errorShape(body, fallback) {
   let parsed;
   try {
@@ -1156,7 +1185,7 @@ class ResponsesWebSocketPeer {
         },
       );
       if (completed?.id && !terminalFailure) {
-        const output = Array.isArray(completed.output) ? completed.output : outputItems;
+        const output = reconciledContinuationOutput(completed.output, outputItems);
         this.continuations.clear();
         const continuation = !continuationOverflow
           ? continuationState(

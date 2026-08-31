@@ -735,6 +735,58 @@ test("prewarms locally and reconstructs incremental turns without losing history
   peer.close();
 });
 
+test("continuation replay prefers the complete custom tool item over a conflicting completion snapshot", async (t) => {
+  const bodies = [];
+  const customCall = {
+    type: "custom_tool_call",
+    id: "ctc_custom",
+    status: "completed",
+    call_id: "call_custom",
+    name: "exec",
+    input: "text(await tools.exec_command({cmd: 'echo ok'}));",
+  };
+  const { server, port } = await startServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) chunks.push(chunk);
+    bodies.push(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+    const id = bodies.length === 1 ? "resp-custom" : "resp-after-tool";
+    sse(response, [
+      { type: "response.created", response: { id } },
+      ...(bodies.length === 1
+        ? [
+            { type: "response.output_item.done", item: customCall },
+            {
+              type: "response.completed",
+              response: {
+                id,
+                output: [{ type: "function_call", call_id: "call_custom", name: "exec" }],
+                usage: {},
+              },
+            },
+          ]
+        : [{ type: "response.completed", response: { id, usage: {} } }]),
+    ]);
+  });
+  t.after(() => server.close());
+  const { peer } = await connect(port);
+  t.after(() => peer.socket.destroy());
+
+  peer.sendJson(createRequest());
+  assert.equal((await peer.nextJson()).type, "response.created");
+  assert.equal((await peer.nextJson()).type, "response.output_item.done");
+  assert.equal((await peer.nextJson()).type, "response.completed");
+
+  const toolResult = {
+    type: "custom_tool_call_output",
+    call_id: "call_custom",
+    output: [{ type: "input_text", text: "ok" }],
+  };
+  peer.sendJson(createRequest({ previous_response_id: "resp-custom", input: [toolResult] }));
+  assert.equal((await peer.nextJson()).type, "response.created");
+  assert.equal((await peer.nextJson()).type, "response.completed");
+  assert.deepEqual(bodies[1].input, [...bodies[0].input, customCall, toolResult]);
+  peer.close();
+});
 test("wraps HTTP failures and serializes requests on a reused connection", async (t) => {
   let calls = 0;
   let active = 0;
