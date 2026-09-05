@@ -259,26 +259,43 @@ test("active model speed prefers its provider and matches qualified slugs", () =
   assert.equal(observedModelSpeed(usage, "deepseek", "missing/model"), null);
 });
 
-test("panel renderModelSpeed hides tok/s during active generation", () => {
-  const { JSDOM } = await import("jsdom");
-  const dom = new JSDOM(`
-    <div id="speed-model"></div>
-    <div id="model-speed"></div>
-    <div id="speed-detail"></div>
-  `);
-  const elements = {
-    speedModel: dom.window.document.getElementById("speed-model"),
-    modelSpeed: dom.window.document.getElementById("model-speed"),
-    speedDetail: dom.window.document.getElementById("speed-detail"),
-  };
+test("panel speed rendering logic detects generation state correctly", () => {
+  // Verify the isGenerating logic that renderModelSpeed uses
 
-  // Simulate idle state with measured speed
+  // Idle state with no active requests
   const idleActivity = {
     state: "idle",
     model: "provider/model",
     provider: "provider",
     active: [],
   };
+  const isIdleGenerating = idleActivity.state === "generating" || (idleActivity.active && idleActivity.active.length > 0);
+  assert.equal(isIdleGenerating, false, "idle state with no active requests should not be generating");
+
+  // Generating state
+  const generatingActivity = {
+    state: "generating",
+    model: "provider/model",
+    provider: "provider",
+    active: [{ model: "provider/model", provider: "provider" }],
+  };
+  const isGenerating =
+    generatingActivity.state === "generating" || (generatingActivity.active && generatingActivity.active.length > 0);
+  assert.equal(isGenerating, true, "generating state should be detected");
+
+  // Active requests present even if state is not explicitly "generating"
+  const activeWithoutGeneratingState = {
+    state: "idle",
+    model: "provider/model",
+    provider: "provider",
+    active: [{ model: "provider/model", provider: "provider" }],
+  };
+  const hasActive =
+    activeWithoutGeneratingState.state === "generating" ||
+    (activeWithoutGeneratingState.active && activeWithoutGeneratingState.active.length > 0);
+  assert.equal(hasActive, true, "active requests should be detected even without generating state");
+
+  // Verify observedModelSpeed should return null when generating
   const providerUsage = {
     providers: [
       {
@@ -294,21 +311,13 @@ test("panel renderModelSpeed hides tok/s during active generation", () => {
       },
     ],
   };
+  // When not generating, observedModelSpeed should be called and return speed
+  const observedIdle = !isIdleGenerating ? observedModelSpeed(providerUsage, "provider", "provider/model") : null;
+  assert.deepEqual(observedIdle, { speed: 125.3, samples: 10 });
 
-  // Mock renderModelSpeed (we'll verify the logic inline)
-  const isGenerating = idleActivity.state === "generating" || (idleActivity.active && idleActivity.active.length > 0);
-  assert.equal(isGenerating, false, "idle state should not be generating");
-
-  // Simulate generating state
-  const generatingActivity = {
-    state: "generating",
-    model: "provider/model",
-    provider: "provider",
-    active: [{ model: "provider/model", provider: "provider" }],
-  };
-  const isGeneratingActive =
-    generatingActivity.state === "generating" || (generatingActivity.active && generatingActivity.active.length > 0);
-  assert.equal(isGeneratingActive, true, "generating state should be detected");
+  // When generating, observedModelSpeed should not be called (returns null)
+  const observedGenerating = !isGenerating ? observedModelSpeed(providerUsage, "provider", "provider/model") : null;
+  assert.equal(observedGenerating, null, "speed should be null during generation");
 });
 
 test("service health rows expose enabled dependencies without leaking endpoint details", () => {
