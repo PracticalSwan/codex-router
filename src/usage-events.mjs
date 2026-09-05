@@ -84,6 +84,7 @@ export function recordUsageEvent({
   cachedInputTokens,
   outputTokens,
   billedOutputTokens,
+  reasoningTokens,
   totalTokens,
   retries,
   // True when the upstream stream died after its 200 head was already
@@ -217,6 +218,9 @@ export function recordUsageEvent({
       : {}),
     ...(safeTokenCount(billedOutputTokens) !== undefined
       ? { billedOutputTokens: safeTokenCount(billedOutputTokens) }
+      : {}),
+    ...(safeTokenCount(reasoningTokens) !== undefined
+      ? { reasoningTokens: safeTokenCount(reasoningTokens) }
       : {}),
     ...(safeTokenCount(totalTokens) !== undefined
       ? { totalTokens: safeTokenCount(totalTokens) }
@@ -452,6 +456,7 @@ export function recentUsageEvents({ sinceMs = 24 * 60 * 60 * 1000, limit = 1_000
         const cachedInputTokens = safeTokenCount(event.cachedInputTokens);
         const outputTokens = safeTokenCount(event.outputTokens);
         const billedOutputTokens = safeTokenCount(event.billedOutputTokens);
+        const reasoningTokens = safeTokenCount(event.reasoningTokens);
         const totalTokens = safeTokenCount(event.totalTokens);
         const retries = safeRetryCount(event.retries);
         const estimatedInputTokens = safeTokenCount(event.estimatedInputTokens);
@@ -509,6 +514,7 @@ export function recentUsageEvents({ sinceMs = 24 * 60 * 60 * 1000, limit = 1_000
           ...(cachedInputTokens !== undefined ? { cachedInputTokens } : {}),
           ...(outputTokens !== undefined ? { outputTokens } : {}),
           ...(billedOutputTokens !== undefined ? { billedOutputTokens } : {}),
+          ...(reasoningTokens !== undefined ? { reasoningTokens } : {}),
           ...(totalTokens !== undefined ? { totalTokens } : {}),
           ...(estimatedInputTokens !== undefined ? { estimatedInputTokens } : {}),
           ...(toolResultsAged ? { toolResultsAged } : {}),
