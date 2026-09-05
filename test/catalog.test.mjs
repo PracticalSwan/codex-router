@@ -1041,6 +1041,34 @@ test("native catalog cache is reusable only for the codex build that captured it
   assert.equal(nativeCatalogIsReusable({ models: [] }, "codex-cli 0.146.1"), false);
 });
 
+test("native catalog cache is invalidated when the Codex binary changes without a version change", () => {
+  const captured = {
+    captured_with: "codex-cli 0.153.3",
+    native_source_fingerprint: "account-a",
+    native_binary_fingerprint: "binary-a",
+    models: [template],
+  };
+
+  assert.equal(
+    nativeCatalogIsReusable(
+      captured,
+      "codex-cli 0.153.3",
+      "account-a",
+      "binary-a",
+    ),
+    true,
+  );
+  assert.equal(
+    nativeCatalogIsReusable(
+      captured,
+      "codex-cli 0.153.3",
+      "account-a",
+      "binary-b",
+    ),
+    false,
+  );
+});
+
 test("native catalog merge preserves account visibility and bundled-only models", () => {
   const accountMini = {
     slug: "gpt-mini",

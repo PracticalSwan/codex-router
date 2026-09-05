@@ -25,7 +25,12 @@ import {
   NATIVE_CATALOG_PATH,
   PORTS,
 } from "./paths.mjs";
-import { codexAuthStatus, codexVersion, runCodex } from "./codex-binary.mjs";
+import {
+  codexAuthStatus,
+  codexBinaryFingerprint,
+  codexVersion,
+  runCodex,
+} from "./codex-binary.mjs";
 import { readUserModels } from "./user-models.mjs";
 import { syncRoutedCodexAgents } from "./codex-agent-catalog.mjs";
 import {
@@ -329,9 +334,11 @@ function captureNative(cache) {
   }
   const capturedWith = codexVersion();
   const sourceFingerprint = cache.fingerprint;
+  const binaryFingerprint = codexBinaryFingerprint();
   atomicJson(NATIVE_CATALOG_PATH, {
     ...(capturedWith ? { captured_with: capturedWith } : {}),
     ...(sourceFingerprint ? { native_source_fingerprint: sourceFingerprint } : {}),
+    ...(binaryFingerprint ? { native_binary_fingerprint: binaryFingerprint } : {}),
     models: parsed.models,
   });
   return parsed;
@@ -346,6 +353,7 @@ export function nativeCatalogIsReusable(
   parsed,
   currentVersion,
   currentSourceFingerprint = undefined,
+  currentBinaryFingerprint = undefined,
 ) {
   if (!parsed || !Array.isArray(parsed.models) || parsed.models.length === 0) {
     return false;
@@ -354,6 +362,12 @@ export function nativeCatalogIsReusable(
   if (
     currentSourceFingerprint &&
     parsed.native_source_fingerprint !== currentSourceFingerprint
+  ) {
+    return false;
+  }
+  if (
+    currentBinaryFingerprint &&
+    parsed.native_binary_fingerprint !== currentBinaryFingerprint
   ) {
     return false;
   }
@@ -404,7 +418,14 @@ function nativeCatalog({ refreshNative = refresh } = {}) {
     }
   }
   const parsed = JSON.parse(readFileSync(NATIVE_CATALOG_PATH, "utf8"));
-  if (nativeCatalogIsReusable(parsed, codexVersion(), cache.fingerprint)) {
+  if (
+    nativeCatalogIsReusable(
+      parsed,
+      codexVersion(),
+      cache.fingerprint,
+      codexBinaryFingerprint(),
+    )
+  ) {
     return parsed;
   }
   try {

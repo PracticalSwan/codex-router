@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { NATIVE_CATALOG_PATH, CONFIG_PATH } from "./paths.mjs";
 import { nativeCatalogIsReusable, readModelsCache } from "./catalog.mjs";
-import { codexVersion } from "./codex-binary.mjs";
+import { codexBinaryFingerprint, codexVersion } from "./codex-binary.mjs";
 
 // Marker pattern from config-manager.mjs to detect managed Codex config
 const managedMarkerPattern = /^# BEGIN codex-router$/m;
@@ -47,9 +47,15 @@ export function nativeCatalogDriftDetected() {
     // Read the stored native catalog
     const parsed = JSON.parse(readFileSync(NATIVE_CATALOG_PATH, "utf8"));
 
-    // Check if reusable (fingerprint + version match)
+    // Check account-cache, CLI-version, and installed-binary identity.
     const version = codexVersion();
-    return !nativeCatalogIsReusable(parsed, version, cache.fingerprint);
+    const binaryFingerprint = codexBinaryFingerprint();
+    return !nativeCatalogIsReusable(
+      parsed,
+      version,
+      cache.fingerprint,
+      binaryFingerprint,
+    );
   } catch {
     // Any error means we can't reliably detect drift
     return false;
