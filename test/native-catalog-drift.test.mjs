@@ -26,6 +26,7 @@ test("drift detection triggers republish with new arbitrary native in merged out
 
     // Import after env is set
     const { nativeCatalogDriftDetected, republishOnNativeDrift } = await import("../src/native-catalog-drift.mjs");
+    const { codexBinaryFingerprint, codexVersion } = await import("../src/codex-binary.mjs");
     const { NATIVE_CATALOG_PATH, MERGED_CATALOG_PATH, CONFIG_PATH } = await import("../src/paths.mjs");
 
     // Create minimal managed config so codexIntegrationInstalled returns true
@@ -49,10 +50,17 @@ test("drift detection triggers republish with new arbitrary native in merged out
       JSON.stringify(modelsCache),
     );
 
-    // Simulate stored native-models.json with old fingerprint
+    // Simulate stored native-models.json with old fingerprint. Match a real
+    // installed Codex when the test host has one; CI hosts without Codex keep
+    // the historical fallback fixture.
+    const currentVersion = codexVersion();
+    const currentBinaryFingerprint = codexBinaryFingerprint();
     const storedCatalog = {
-      captured_with: "codex-cli 0.146.1",
+      captured_with: currentVersion || "codex-cli 0.146.1",
       native_source_fingerprint: oldFingerprint,
+      ...(currentBinaryFingerprint
+        ? { native_binary_fingerprint: currentBinaryFingerprint }
+        : {}),
       models: [oldNative],
     };
     writeFileSync(NATIVE_CATALOG_PATH, JSON.stringify(storedCatalog));
