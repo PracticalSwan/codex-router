@@ -185,7 +185,7 @@ export function mergeNativeModel(accountModel, bundledModel) {
 
 // One read serves both the catalog contents and the fingerprint; reading the
 // file twice would hash a possibly different snapshot than the one merged.
-function readModelsCache() {
+export function readModelsCache() {
   const missing = { catalog: undefined, fingerprint: undefined };
   if (!existsSync(MODELS_CACHE_PATH)) return missing;
   try {
@@ -200,6 +200,21 @@ function readModelsCache() {
   } catch {
     return missing;
   }
+}
+
+// A routed custom catalog never rewrites Codex's account cache. When that cache
+// is valid and contains no routed slugs, it remains a safe native source even
+// while model_catalog_json points at the merged router catalog.
+export function nativeCacheCanRefreshInPlace(cache = readModelsCache()) {
+  const catalog = cache?.catalog;
+  return (
+    Boolean(validNativeCatalog(catalog)) &&
+    !catalog.models.some((model) => MODEL_BY_SLUG.has(String(model.slug)))
+  );
+}
+
+export function nativeCatalogCanRefreshInPlace() {
+  return discoveryDisabled() || nativeCacheCanRefreshInPlace();
 }
 
 function atomicContents(target, contents) {
