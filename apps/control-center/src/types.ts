@@ -542,6 +542,8 @@ export interface UsageEvent {
   cachedInputTokens?: number;
   outputTokens?: number;
   billedOutputTokens?: number;
+  /** Reasoning tokens (silent thinking) included in outputTokens. */
+  reasoningTokens?: number;
   totalTokens?: number;
   estimatedInputTokens?: number;
   retries?: number;

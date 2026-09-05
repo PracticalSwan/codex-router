@@ -1502,7 +1502,12 @@ function tokensPerSecondFromEvent(event: UsageEvent): number | null {
   ) return null;
   const generationDurationMs = durationMs - firstTokenMs;
   if (generationDurationMs <= 0) return null;
-  const rate = (output * 1_000) / generationDurationMs;
+  // Subtract reasoning tokens from output for tok/s numerator (same as provider-usage).
+  // Industry TTFT measures time to first visible token; reasoning tokens are generated
+  // during silent thinking before any visible output.
+  const reasoningTokens = optionalNumber(event.reasoningTokens) ?? 0;
+  const speedOutput = Math.max(0, output - reasoningTokens);
+  const rate = (speedOutput * 1_000) / generationDurationMs;
   return Number.isFinite(rate) && rate <= 500 ? Math.round(rate * 10) / 10 : null;
 }
 
