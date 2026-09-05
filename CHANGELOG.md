@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- **Tok/s meter now excludes reasoning tokens from the speed numerator.**
+  `observedTokensPerSecond` used full `outputTokens` while TTFT waited for the
+  first *visible* token. Providers often include `reasoning_tokens` (silent
+  thinking) in `output_tokens`, inflating reported speed (~+24% measured on
+  Muse Spark free: 502 output with 98 reasoning → 163.6 tok/s vs ~131.6 when
+  reasoning excluded). `normalizeTokenUsage` now extracts `reasoningTokens`
+  from `output_tokens_details.reasoning_tokens` /
+  `completion_tokens_details.reasoning_tokens` / `reasoning_tokens` when
+  present. `aggregateProviderUsage` subtracts reasoning from the tok/s
+  numerator to match industry TTFT on first visible token. Provider totals and
+  billing still count full output. Historical events without `reasoningTokens`
+  are unchanged. Also fixes chat first-token detection: `chat.completion.chunk`
+  often has no `type` field, so checking type before delta meant chat TTFT
+  never fired and tray speed stayed null.
+
 - **Startup prunes `enabled-providers.json` entries that cannot authenticate.**
   Unknown ids (version skew) and recognised providers without a credential
   were left in the selection file forever, so the dispatcher still treated

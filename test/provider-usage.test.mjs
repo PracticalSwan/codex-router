@@ -423,6 +423,53 @@ test("uses only the latest 20 clean generation timings for observed speed", () =
   assert.equal(model.observedTokensPerSecond, 50);
 });
 
+test("excludes reasoning tokens from speed numerator while keeping totals", () => {
+  const now = Date.parse("2026-07-21T18:00:00Z");
+  // Two events: same duration/firstToken/output, but one has reasoning tokens.
+  const events = [
+    {
+      meteringVersion: 1,
+      at: new Date(now - 60_000).toISOString(),
+      provider: "opencode-go",
+      model: "opencode-go/glm-5.3-flash",
+      status: 200,
+      durationMs: 4_000,
+      firstTokenMs: 1_000,
+      outputTokens: 404,
+      totalTokens: 504,
+    },
+    {
+      meteringVersion: 1,
+      at: new Date(now).toISOString(),
+      provider: "opencode-go",
+      model: "opencode-go/glm-5.3-flash",
+      status: 200,
+      durationMs: 4_000,
+      firstTokenMs: 1_000,
+      outputTokens: 502,
+      reasoningTokens: 98,
+      totalTokens: 602,
+    },
+  ];
+  const snapshot = aggregateProviderUsage(events, { days: 7, now });
+  const model = snapshot.providers
+    .find((provider) => provider.id === "opencode-go")
+    .models[0];
+  
+  // Provider totals still count full output (404 + 502 = 906).
+  assert.equal(
+    snapshot.providers.find((provider) => provider.id === "opencode-go").outputTokens,
+    906,
+  );
+  // Model totals also count full output.
+  assert.equal(model.outputTokens, 906);
+  // But speed uses non-reasoning output: (404 + (502-98)) / 2 = 404 tok per 3s = 134.7 tok/s.
+  // First event: 404 tok / 3000 ms = 134.7 tok/s.
+  // Second event: (502-98) tok / 3000 ms = 404 tok / 3000 ms = 134.7 tok/s.
+  // Median of [134.7, 134.7] = 134.7.
+  assert.equal(model.observedTokensPerSecond, 134.7);
+});
+
 test("accepts a response that starts within the first measured millisecond", () => {
   const now = Date.parse("2026-07-21T18:00:00Z");
   const model = aggregateProviderUsage(
