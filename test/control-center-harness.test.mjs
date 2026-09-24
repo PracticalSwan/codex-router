@@ -1,4 +1,4 @@
-import test from "node:test";
+import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -11,6 +11,15 @@ import {
   getContextSessionsSnapshot,
   registerIpcHandlers,
 } from "../apps/control-center/electron/ipc.mjs";
+
+// These synthetic IPC tests must exercise this checkout rather than a separately
+// installed router whose control protocol can differ from the fixture.
+const previousSourceRoot = process.env.CODEX_ROUTER_SOURCE_ROOT;
+process.env.CODEX_ROUTER_SOURCE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+after(() => {
+  if (previousSourceRoot === undefined) delete process.env.CODEX_ROUTER_SOURCE_ROOT;
+  else process.env.CODEX_ROUTER_SOURCE_ROOT = previousSourceRoot;
+});
 
 const CODEX_ID = "019f7432-43d9-7413-8f18-5f964587f58e";
 const DSH_ID = "session-123e4567-e89b-42d3-a456-426614174000";
